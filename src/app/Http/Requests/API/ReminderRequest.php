@@ -23,10 +23,10 @@ class ReminderRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'title' => ['required', Rule::unique('reminders')->ignore($this->id)],
-            'description' => 'required|string',
-            'remind_at' => 'required|integer',
-            'event_at' => 'required|integer',
+            'title' => [Rule::requiredIf($this->isMethod('POST')), 'string', Rule::unique('reminders')->ignore($this->id)],
+            'description' => [Rule::requiredIf($this->isMethod('POST')), 'string'],
+            'remind_at' => [Rule::requiredIf($this->isMethod('POST')), 'integer'],
+            'event_at' => [Rule::requiredIf($this->isMethod('POST')), 'integer'],
         ];
     }
 }

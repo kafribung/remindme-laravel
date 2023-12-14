@@ -27,7 +27,6 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Reminder
     Route::apiResource('reminders', ReminderController::class);
-
 });
 
 // Route::post('register', [AuthController::class, 'register']);

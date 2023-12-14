@@ -7,7 +7,6 @@ use App\Http\Requests\API\ReminderRequest;
 use App\Http\Resources\API\ReminderBlockResource;
 use App\Http\Resources\API\ReminderSingleResource;
 use App\Models\Reminder;
-use Illuminate\Http\Request;
 
 class ReminderController extends Controller
 {
@@ -43,16 +42,21 @@ class ReminderController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(Reminder $reminder, ReminderRequest $request)
     {
-        //
+        $data = $request->validated();
+        $reminder->update($data);
+
+        return ReminderSingleResource::make($reminder);
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id)
+    public function destroy(Reminder $reminder)
     {
-        //
+        $reminder->delete();
+
+        return response(['ok' => true]);
     }
 }
