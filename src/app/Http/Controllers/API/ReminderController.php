@@ -7,15 +7,22 @@ use App\Http\Requests\API\ReminderRequest;
 use App\Http\Resources\API\ReminderBlockResource;
 use App\Http\Resources\API\ReminderSingleResource;
 use App\Models\Reminder;
+use Illuminate\Http\Request;
 
 class ReminderController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        //
+        $limit = $request->limit ?? 10;
+
+        $reminders = Reminder::with('user')->latest('remind_at')->limit($limit)->get();
+
+        return ReminderBlockResource::collection($reminders)->additional([
+            'meta' => ['limit' => $limit],
+        ]);
     }
 
     /**

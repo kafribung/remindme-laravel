@@ -15,6 +15,7 @@ class ReminderSingleResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
+            'id' => $this->id,
             'title' => $this->title,
             'description' => $this->description,
             'remind_at' => $this->epochToDate($this->remind_at),

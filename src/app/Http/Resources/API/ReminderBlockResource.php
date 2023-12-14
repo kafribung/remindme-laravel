@@ -16,7 +16,9 @@ class ReminderBlockResource extends JsonResource
     {
         return [
             'ok' => true,
-            'data' => ReminderSingleResource::make($this),
+            'data' => [
+                'reminders' => ReminderSingleResource::make($this),
+            ],
         ];
     }
 }
