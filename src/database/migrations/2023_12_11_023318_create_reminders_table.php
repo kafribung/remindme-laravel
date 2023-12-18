@@ -18,6 +18,7 @@ return new class extends Migration
             $table->string('description');
             $table->integer('remind_at');
             $table->integer('event_at');
+            $table->boolean('sent_email')->default(false);
             $table->timestamps();
             $table->softDeletes();
         });

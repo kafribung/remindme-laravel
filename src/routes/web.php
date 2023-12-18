@@ -13,6 +13,9 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::get('/', function () {
-    return view('welcome');
-});
+// Test email
+// Route::get('/mailable', function () {
+//     $reminder = App\Models\Reminder::find(8);
+
+//     return new App\Mail\SendReminderMail($reminder);
+// });

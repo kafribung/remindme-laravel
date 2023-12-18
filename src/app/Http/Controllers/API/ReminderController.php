@@ -32,6 +32,7 @@ class ReminderController extends Controller
     {
         $data = $request->validated();
         $data['user_id'] = auth()->id();
+        $data['event_at'] = now()->timestamp;
 
         $reminder = Reminder::create($data);
 

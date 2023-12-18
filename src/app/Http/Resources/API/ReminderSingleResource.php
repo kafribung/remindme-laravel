@@ -21,6 +21,7 @@ class ReminderSingleResource extends JsonResource
             'remind_at' => $this->epochToDate($this->remind_at),
             'event_at' => $this->epochToDate($this->event_at),
             'user' => $this->user->name,
+            'sent_email' => $this->sent_email,
         ];
     }
 }
