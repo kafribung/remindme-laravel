@@ -1,0 +1,32 @@
+version: 1
+task_definition:
+  ecs_network_mode: ##aws_network_mode##
+  task_role_arn: ##aws_role_name##
+  task_execution_role: ##aws_execution_role_name##
+  task_size:
+    cpu_limit: ##cpu_limit##
+    mem_limit: ##mem_limit##
+  services:
+    ##service_name##:
+      essential: true
+      mem_limit: ##mem_limit##
+      mem_reservation: ##mem_limit##
+      cpu_shares: 0
+      healthcheck:
+        test: ["CMD-SHELL", "curl --fail http://localhost##health_check_url## || exit 1"]
+        interval: 1m
+        timeout: 30s
+        retries: 3
+        start_period: 30s
+      logging:
+        driver: awslogs
+        options:
+          awslogs-group: /aws/ecs/##service_name##
+          awslogs-region: ##aws_region##
+          awslogs-stream-prefix: ##service_name##
+# run_params:
+#   network_configuration:
+#     awsvpc_configuration:
+#       subnets: ##aws_subnets##
+#       security_groups: ##aws_security_groups##
+#       assign_public_ip: ##aws_assign_public_ip##

@@ -19,3 +19,7 @@ use Illuminate\Support\Facades\Route;
 
 //     return new App\Mail\SendReminderMail($reminder);
 // });
+
+Route::get('health-check', function () {
+    return 'ok';
+});

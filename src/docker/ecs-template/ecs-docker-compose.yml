@@ -1,0 +1,44 @@
+version: '2'
+
+services:
+  ##service_name##:
+    image: ##tag##
+    ports:
+      - ##ports##
+    container_name: ##service_name##
+    logging:
+      driver: awslogs
+      options:
+        awslogs-region: "##aws_region##"
+        awslogs-group: "/aws/ecs/##service_name##"
+        awslogs-stream-prefix: ##service_name##
+    environment:
+      - APP_URL=${APP_URL}
+      - APP_ENV=${APP_ENV}
+      - APP_DEBUG=${APP_DEBUG}
+      - APP_KEY=${APP_KEY}
+      - DB_CONNECTION=${DB_CONNECTION}
+      - DB_HOST=${DB_HOST}
+      - DB_PORT=${DB_PORT}
+      - DB_DATABASE=${DB_DATABASE}
+      - DB_USERNAME=${DB_USERNAME}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_RO_HOST=${DB_RO_HOST}
+      - DB_RO_PORT=${DB_RO_PORT}
+      - DB_RO_DATABASE=${DB_RO_DATABASE}
+      - DB_RO_USERNAME=${DB_RO_USERNAME}
+      - DB_RO_PASSWORD=${DB_RO_PASSWORD}
+      - FILESYSTEM_DISK=${FILESYSTEM_DISK}
+      - MAIL_MAILER=${MAIL_MAILER}
+      - MAIL_HOST=${MAIL_HOST}
+      - MAIL_PORT=${MAIL_PORT}
+      - MAIL_USERNAME=${MAIL_USERNAME}
+      - MAIL_PASSWORD=${MAIL_PASSWORD}
+      - # MAIL_ENCRYPTION=${MAIL_ENCRYPTION}
+      - MAIL_FROM_ADDRESS=${MAIL_FROM_ADDRESS}
+      - MAIL_FROM_NAME=${MAIL_FROM_NAME}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_BUCKET=${AWS_BUCKET}
+      - AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION}
+      - AWS_SES_REGION=${AWS_SES_REGION}

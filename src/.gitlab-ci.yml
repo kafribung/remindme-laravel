@@ -1,0 +1,119 @@
+stages:
+  - build
+  - test
+  - publish
+  - release
+
+variables:
+  AWS_DOCKER_REGISTRY: 222210869478.dkr.ecr.ap-southeast-3.amazonaws.com
+  GITLAB_DOCKER_REGISTRY: gitlab.kafri.id:5005
+  APP_NAME: "remindme-laravel"
+  APP_PORT: 80
+  HEALTH_CHECK_URL: "/health-check"
+  CPU_LIMIT: "2048"
+  MEM_LIMIT: "4GB"
+  CONTAINER_PORTS: "80:80"
+  ECS_TASK_EXECUTION_ROLE: "ecsTaskExecutionRole"
+  ECS_TASK_ROLE: "webserver.user"
+  AWS_NETWORK_MODE: "awsvpc"
+  SESSION_DRIVER: "database"
+  DOCKER_TLS_CERTDIR: ""
+
+.docker: &docker-aws
+  image: $CI_REGISTRY/kafri/ci-cd-images:docker-dind-awscli
+  services:
+    - docker:20.10-dind
+  variables:
+    DOCKER_DRIVER: overlay2
+    DOCKER_TLS_CERTDIR: ""
+  before_script:
+    - aws --version
+    - ecs-cli --version
+    - docker --version
+
+.build-base:
+  <<: *docker-aws
+  stage: build
+  script:
+    - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_DOCKER_REGISTRY
+    - docker build -t $APP_NAME:$ENV_SUFFIX -f deployment/docker/8.1/Dockerfile-prod .
+    - docker tag $APP_NAME:$ENV_SUFFIX $AWS_DOCKER_REGISTRY/$APP_NAME:$ENV_SUFFIX
+    - docker tag $APP_NAME:$ENV_SUFFIX $AWS_DOCKER_REGISTRY/$APP_NAME:$CI_COMMIT_SHORT_SHA
+    - docker push $AWS_DOCKER_REGISTRY/$APP_NAME:$ENV_SUFFIX
+    - docker push $AWS_DOCKER_REGISTRY/$APP_NAME:$CI_COMMIT_SHORT_SHA
+
+.deploy-base:
+  stage: release
+  <<: *docker-aws
+  script:
+    - echo "Build docker-compose params..."
+    - export IMAGE_TAG=$AWS_DOCKER_REGISTRY/$APP_NAME:$ENV_SUFFIX
+    - sed "s~##tag##~${IMAGE_TAG}~g" "deployment/ecs-template/ecs-docker-compose.yml" > "ecs-docker-compose.yml"
+    - sed -i -e "s~##service_name##~${APP_NAME}-$ENV_SUFFIX~g" ecs-docker-compose.yml
+    - sed -i -e "s~##aws_region##~${AWS_DEFAULT_REGION}~g" ecs-docker-compose.yml
+    - sed -i -e "s~##ports##~${CONTAINER_PORTS}~g" ecs-docker-compose.yml
+    - cat ./ecs-docker-compose.yml
+    - echo ""
+    - echo "Build ecs-params.yml..."
+    - sed "s~##service_name##~${APP_NAME}-$ENV_SUFFIX~g" "deployment/ecs-template/ecs-params.yml" > "ecs-params.yml"
+    - sed -i -e "s~##aws_region##~${AWS_DEFAULT_REGION}~g" ecs-params.yml
+    - sed -i -e "s~##cpu_limit##~${CPU_LIMIT}~g" ecs-params.yml
+    - sed -i -e "s~##mem_limit##~${MEM_LIMIT}~g" ecs-params.yml
+    - sed -i -e "s~##health_check_url##~:${APP_PORT}${HEALTH_CHECK_URL}~g" ecs-params.yml
+    - sed -i -e "s~##aws_execution_role_name##~${ECS_TASK_EXECUTION_ROLE}~g" ecs-params.yml
+    - sed -i -e "s~##aws_role_name##~${ECS_TASK_ROLE}~g" ecs-params.yml
+    - sed -i -e "s~##aws_network_mode##~${AWS_NETWORK_MODE}~g" ecs-params.yml
+    - cat ./ecs-params.yml
+    - echo "start deploying task definition"
+    - echo "Update Task Definition..."
+    - ecs-cli compose --region ${AWS_DEFAULT_REGION} --project-name ${APP_NAME}-$ENV_SUFFIX --file ./ecs-docker-compose.yml --cluster ${APP_NAME} create --launch-type FARGATE --create-log-groups
+    - echo "Update ECS Service..."
+    - aws --region ${AWS_DEFAULT_REGION} ecs update-service --cluster ${APP_NAME} --service ${APP_NAME}-$ENV_SUFFIX --task-definition ${APP_NAME}-$ENV_SUFFIX --enable-execute-command --network-configuration "awsvpcConfiguration={subnets=[subnet-09986e326dee653b6,subnet-065cced55aa3ad7bf], securityGroups=[$SECURITY_GROUPS], assignPublicIp=ENABLED}"
+
+build image staging:
+  extends: .build-base
+  environment:
+    name: staging
+  variables:
+    ENV_SUFFIX: "test"
+    APP_ENV: "test"
+    APP_DEBUG: "true"
+  only:
+    - development
+
+build image prod:
+  extends: .build-base
+  environment:
+    name: production
+  variables:
+    ENV_SUFFIX: "prod"
+    APP_ENV: "production"
+    APP_DEBUG: "false"
+  only:
+    - main
+
+deploy staging:
+  extends: .deploy-base
+  environment:
+    name: test
+  variables:
+    SECURITY_GROUPS: "sg-0764cf05115458400"
+    ENV_SUFFIX: "test"
+    APP_ENV: "test"
+    APP_DEBUG: "false"
+    CPU_LIMIT: "1024"
+    MEM_LIMIT: "2GB"
+  only:
+    - development
+
+deploy production:
+  extends: .deploy-base
+  environment:
+    name: production
+  variables:
+    SECURITY_GROUPS: "sg-01fc1850ae8c64cd0"
+    ENV_SUFFIX: "prod"
+    APP_ENV: "production"
+    APP_DEBUG: "false"
+  only:
+    - main

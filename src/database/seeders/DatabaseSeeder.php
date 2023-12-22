@@ -12,9 +12,13 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        \App\Models\User::factory()->createMany([
-            ['name' => 'Alice', 'email' => 'alice@mail.com'],
-            ['name' => 'Bob', 'email' => 'bob@mail.com'],
-        ]);
+        if (\App\Models\User::doesntExist()) {
+            \App\Models\User::factory()->createMany([
+                ['name' => 'Alice', 'email' => 'alice@mail.com'],
+                ['name' => 'Bob', 'email' => 'bob@mail.com'],
+            ]);
+        }
+
+        \App\Models\Reminder::factory(10)->create();
     }
 }
